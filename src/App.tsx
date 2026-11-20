@@ -1,9 +1,10 @@
 ﻿import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { DataProvider } from './contexts/DataContext';
-import { AuthProvider, useAuth } from './contexts/AuthContext'; // Importação do Auth
+import { AuthProvider, useAuth } from './contexts/AuthContext'; 
+import { ToastProvider } from './contexts/ToastContext'; // <-- IMPORTANTE
 import { MainLayout } from './layouts/MainLayout';
-import { Login } from './pages/Login'; // Nova tela de Login
-import { AdminPanel } from './pages/AdminPanel'; // Novo Painel Admin
+import { Login } from './pages/Login'; 
+import { AdminPanel } from './pages/AdminPanel'; 
 import { Dashboard } from './pages/Dashboard';
 import { Servicos } from './pages/Servicos';
 import { Agenda } from './pages/Agenda';
@@ -13,11 +14,9 @@ import { Estoque } from './pages/Estoque';
 import { Relatorios } from './pages/Relatorios';
 import { Configuracoes } from './pages/Configuracoes';
 
-// Componente que protege as rotas
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading } = useAuth();
 
-  // Enquanto o Supabase verifica se há um token salvo, mostramos uma tela de carregamento elegante
   if (loading) {
     return (
       <div className="min-h-screen bg-dm-ivory flex flex-col items-center justify-center">
@@ -27,22 +26,18 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
     );
   }
 
-  // Se não houver sessão, mostra a tela de Login no lugar do app
   if (!session) {
     return <Login />;
   }
 
-  // Se estiver logado, libera o acesso
   return <>{children}</>;
 }
 
 function AppRoutes() {
   return (
     <Routes>
-      {/* Rota de Login (Fica fora do Layout Principal para não ter Menu) */}
       <Route path="/login" element={<Login />} />
 
-      {/* Rotas Protegidas (Só acessa se estiver logado) */}
       <Route
         element={
           <ProtectedRoute>
@@ -58,8 +53,6 @@ function AppRoutes() {
         <Route path="/estoque" element={<Estoque />} />
         <Route path="/relatorios" element={<Relatorios />} />
         <Route path="/config" element={<Configuracoes />} />
-        
-        {/* Rota do Painel do Fundador */}
         <Route path="/admin" element={<AdminPanel />} />
         
         <Route path="*" element={<div className="text-center mt-20 text-xl font-serif">Página não encontrada.</div>} />
@@ -70,13 +63,14 @@ function AppRoutes() {
 
 function App() {
   return (
-    // O AuthProvider envolve tudo para que o app saiba quem está logado
     <AuthProvider>
-      <DataProvider>
-        <BrowserRouter>
-          <AppRoutes />
-        </BrowserRouter>
-      </DataProvider>
+      <ToastProvider> {/* <-- ADICIONADO AQUI */}
+        <DataProvider>
+          <BrowserRouter>
+            <AppRoutes />
+          </BrowserRouter>
+        </DataProvider>
+      </ToastProvider>
     </AuthProvider>
   );
 }

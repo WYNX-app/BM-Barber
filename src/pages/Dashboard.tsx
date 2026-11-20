@@ -1,18 +1,19 @@
 ﻿import { useState } from 'react';
 import { useData } from '../contexts/DataContext';
+import { useToast } from '../contexts/ToastContext'; // <-- IMPORTANTE
 import { motion, AnimatePresence } from 'framer-motion';
 import { Scissors, CheckCircle, Clock, X, Sparkles, User, Calculator, MessageCircle } from 'lucide-react';
 import { format } from 'date-fns';
 import { ptBR } from 'date-fns/locale';
 import { vibrate } from '../utils/haptics';
-import { Service } from '../types'; // <-- Importando o tipo correto
+import { Service } from '../types';
 
 export const Dashboard = () => {
   const { services, quickRegister, appointments, clients } = useData();
+  const { showToast } = useToast(); // <-- Puxando o Toast
   
   const [clientName, setClientName] = useState('');
   const [showSuggestions, setShowSuggestions] = useState(false);
-  // CORRIGIDO AQUI: O carrinho agora é do tipo Service[]
   const [cart, setCart] = useState<Service[]>([]);
   const [paymentStatus, setPaymentStatus] = useState<'pago' | 'pendente'>('pago');
   
@@ -55,7 +56,11 @@ export const Dashboard = () => {
 
   const handleRegister = (e: React.FormEvent) => {
     e.preventDefault();
-    if (!clientName || cart.length === 0) return;
+    
+    // Substituindo o alert() pelo showToast()
+    if (!clientName || cart.length === 0) {
+      return showToast('Preencha o nome e adicione pelo menos um serviço!', 'error');
+    }
 
     vibrate([50, 50, 50]);
     
@@ -81,9 +86,9 @@ export const Dashboard = () => {
   };
 
   const enviarReciboWhatsApp = () => {
+    // Substituindo o alert() pelo showToast()
     if (!lastClientPhone) {
-      alert("Esse cliente não tem telefone cadastrado na ficha.");
-      return;
+      return showToast('Esse cliente não tem telefone cadastrado na ficha.', 'error');
     }
     const cleanPhone = lastClientPhone.replace(/\D/g, '');
     const mensagem = encodeURIComponent(`Olá ${lastName}, tudo bem? Passando para agradecer pela preferência na Barbearia D&M! O valor do seu atendimento hoje foi de R$ ${lastTotal.toFixed(2)}. Esperamos você em breve! ✂️💈`);
@@ -92,6 +97,9 @@ export const Dashboard = () => {
 
   return (
     <div className="space-y-8 pb-10">
+      {/* ... (O resto do JSX do Dashboard continua EXATAMENTE IGUAL ao seu arquivo original) ... */}
+      {/* Basta manter o HTML do formulário e da lista de histórico como você me enviou */}
+      
       <motion.header initial={{ opacity: 0, y: -20 }} animate={{ opacity: 1, y: 0 }} className="flex flex-col gap-2">
         <span className="text-dm-gold font-bold tracking-widest text-sm uppercase">Barbearia D&M</span>
         <h1 className="text-4xl md:text-5xl font-serif font-bold text-dm-black leading-tight">

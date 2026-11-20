@@ -1,17 +1,18 @@
+import { useState } from 'react';
 import { Settings, User, LogOut, Shield } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { ConfirmModal } from '../components/ui/ConfirmModal'; // <-- IMPORTANTE
 
 export const Configuracoes = () => {
   const { signOut, user, isAdmin } = useAuth();
   const navigate = useNavigate();
+  const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
 
   const handleLogout = async () => {
-    if (window.confirm('Tem certeza que deseja sair do sistema?')) {
-      await signOut();
-      navigate('/login');
-    }
+    await signOut();
+    navigate('/login');
   };
 
   return (
@@ -77,13 +78,25 @@ export const Configuracoes = () => {
           Ao sair, você precisará digitar o e-mail e a senha novamente para acessar o sistema.
         </p>
         <button 
-          onClick={handleLogout}
+          onClick={() => setIsLogoutModalOpen(true)} // Abre o nosso modal customizado
           className="flex items-center justify-center gap-2 w-full md:w-auto px-8 py-3 bg-red-600 text-white rounded-xl font-bold hover:bg-red-700 transition-colors shadow-md"
         >
           <LogOut size={18} />
           Sair da Conta
         </button>
       </div>
+
+      {/* NOSSO MODAL CUSTOMIZADO */}
+      <ConfirmModal
+        isOpen={isLogoutModalOpen}
+        title="Sair do Sistema"
+        message="Tem certeza que deseja encerrar a sessão? Você precisará fazer login novamente."
+        confirmText="Sim, Sair"
+        cancelText="Cancelar"
+        isDestructive={true}
+        onConfirm={handleLogout}
+        onCancel={() => setIsLogoutModalOpen(false)}
+      />
     </motion.div>
   );
 };
