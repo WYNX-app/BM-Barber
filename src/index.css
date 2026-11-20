@@ -1,0 +1,30 @@
+﻿@import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@500;600;700&family=Inter:wght@400;500;600;700&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  html {
+    font-size: 16px; /* Aumenta a base para telas mobile */
+  }
+  body {
+    @apply bg-dm-ivory text-dm-black font-sans antialiased;
+  }
+  h1, h2, h3, h4 {
+    @apply font-serif font-semibold;
+  }
+}
+
+/* Scrollbar Premium */
+::-webkit-scrollbar { width: 6px; height: 6px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { @apply bg-dm-gold/40 rounded-full; }
+::-webkit-scrollbar-thumb:hover { @apply bg-dm-gold/80; }
+
+/* Remove setas padrão de input number */
+input[type=number]::-webkit-inner-spin-button, 
+input[type=number]::-webkit-outer-spin-button { 
+  -webkit-appearance: none; 
+  margin: 0; 
+}

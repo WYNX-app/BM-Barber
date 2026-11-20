@@ -1,0 +1,52 @@
+# ==========================================
+# Dependências e Build
+# ==========================================
+node_modules/
+dist/
+dist-ssr/
+build/
+.vite/
+*.local
+
+# ==========================================
+# Variáveis de Ambiente (Segurança)
+# ==========================================
+# NUNCA envie arquivos .env para o repositório
+.env
+.env.local
+.env.development
+.env.production
+.env.test
+*.env
+
+# ==========================================
+# Logs
+# ==========================================
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+# ==========================================
+# Arquivos de Sistema e Editores
+# ==========================================
+.DS_Store
+Thumbs.db
+.vscode/*
+!.vscode/extensions.json
+.idea/
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# ==========================================
+# Configurações do Supabase (Local)
+# ==========================================
+# Pasta de configurações locais do Supabase (se usar CLI no futuro)
+supabase/.branches
+supabase/.temp
