@@ -29,7 +29,6 @@ input[type=number]::-webkit-outer-spin-button {
   margin: 0; 
 }
 
-/* Esconde a barra de rolagem lateral do menu, mas permite rolar */
 .sidebar-scroll::-webkit-scrollbar {
   width: 4px;
 }
@@ -37,7 +36,7 @@ input[type=number]::-webkit-outer-spin-button {
   background: transparent;
 }
 .sidebar-scroll::-webkit-scrollbar-thumb {
-  background: rgba(180, 154, 104, 0.3);
+  background: rgba(180, 154, 104, 0.3); /* Dourado transparente */
   border-radius: 4px;
 }
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {

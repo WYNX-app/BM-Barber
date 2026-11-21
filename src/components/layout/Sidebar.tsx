@@ -19,12 +19,13 @@ export const Sidebar = () => {
   const { isAdmin, signOut } = useAuth();
 
   return (
-    <aside className="w-64 bg-dm-black text-dm-white min-h-screen flex flex-col fixed left-0 top-0 border-r border-dm-graphite z-50">
+    // h-screen e overflow-hidden garantem que a barra não cresça além da tela
+    <aside className="w-64 bg-dm-black text-dm-white h-screen flex flex-col fixed left-0 top-0 border-r border-dm-graphite z-50 overflow-hidden">
       
       {/* CABEÇALHO DA SIDEBAR */}
       <div className="p-6 flex flex-col items-center border-b border-dm-graphite relative shrink-0">
         
-        {/* ÍCONE DE ADMIN (TOPO DIREITO) */}
+        {/* ÍCONE DE ADMIN (TOPO DIREITO, PERTO DO NOME) */}
         {isAdmin && (
           <Link 
             to="/admin" 
@@ -42,7 +43,7 @@ export const Sidebar = () => {
       </div>
 
       {/* MENU DE NAVEGAÇÃO (COM SCROLL) */}
-      {/* A classe overflow-y-auto permite rolar se a tela for pequena */}
+      {/* flex-1 faz ocupar o espaço restante, overflow-y-auto libera a rolagem */}
       <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto sidebar-scroll">
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
