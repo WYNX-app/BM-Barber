@@ -1,7 +1,7 @@
 ﻿import { Link, useLocation } from 'react-router-dom';
 import { Home, Calendar, Users, DollarSign, Package, FileText, Settings, Scissors, Shield, LogOut } from 'lucide-react';
 import { motion } from 'framer-motion';
-import { useAuth } from '../../contexts/AuthContext'; // <-- Importação do Auth
+import { useAuth } from '../../contexts/AuthContext';
 
 const menuItems = [
   { path: '/', icon: Home, label: 'Início' },
@@ -16,21 +16,34 @@ const menuItems = [
 
 export const Sidebar = () => {
   const location = useLocation();
-  const { isAdmin, signOut } = useAuth(); // <-- Puxando os dados do usuário logado
+  const { isAdmin, signOut } = useAuth();
 
   return (
     <aside className="w-64 bg-dm-black text-dm-white min-h-screen flex flex-col fixed left-0 top-0 border-r border-dm-graphite z-50">
       
-      {/* LOGO */}
-      <div className="p-6 flex flex-col items-center border-b border-dm-graphite">
-        <div className="w-16 h-16 rounded-full border-2 border-dm-gold flex items-center justify-center mb-2">
+      {/* CABEÇALHO DA SIDEBAR */}
+      <div className="p-6 flex flex-col items-center border-b border-dm-graphite relative shrink-0">
+        
+        {/* ÍCONE DE ADMIN (TOPO DIREITO) */}
+        {isAdmin && (
+          <Link 
+            to="/admin" 
+            title="Painel do Fundador"
+            className="absolute top-4 right-4 p-2 bg-dm-gold/10 text-dm-gold rounded-lg hover:bg-dm-gold hover:text-dm-black transition-all shadow-sm"
+          >
+            <Shield size={20} />
+          </Link>
+        )}
+
+        <div className="w-16 h-16 rounded-full border-2 border-dm-gold flex items-center justify-center mb-2 bg-dm-black">
           <span className="font-serif text-2xl text-dm-gold">D&M</span>
         </div>
         <h1 className="font-serif text-xl tracking-widest text-dm-ivory">BARBEARIA</h1>
       </div>
 
-      {/* MENU DE NAVEGAÇÃO */}
-      <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto">
+      {/* MENU DE NAVEGAÇÃO (COM SCROLL) */}
+      {/* A classe overflow-y-auto permite rolar se a tela for pequena */}
+      <nav className="flex-1 py-6 px-3 space-y-1 overflow-y-auto sidebar-scroll">
         {menuItems.map((item) => {
           const isActive = location.pathname === item.path;
           return (
@@ -38,7 +51,7 @@ export const Sidebar = () => {
               key={item.path}
               to={item.path}
               className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 relative ${
-                isActive ? 'text-dm-gold font-medium' : 'text-dm-white/60 hover:text-dm-white hover:bg-dm-graphite/50'
+                isActive ? 'text-dm-gold font-medium bg-dm-graphite/30' : 'text-dm-white/60 hover:text-dm-white hover:bg-dm-graphite/50'
               }`}
             >
               {isActive && (
@@ -49,35 +62,18 @@ export const Sidebar = () => {
             </Link>
           );
         })}
-
-        {/* BOTÃO DO ADMIN (SÓ APARECE PARA O HEITOR) */}
-        {isAdmin && (
-          <div className="pt-4 mt-4 border-t border-dm-graphite/50">
-            <Link
-              to="/admin"
-              className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-all duration-300 relative ${
-                location.pathname === '/admin' 
-                  ? 'text-dm-gold bg-dm-gold/10 font-bold' 
-                  : 'text-dm-gold/70 hover:text-dm-gold hover:bg-dm-graphite/50'
-              }`}
-            >
-              <Shield size={20} />
-              <span>Painel do Fundador</span>
-            </Link>
-          </div>
-        )}
       </nav>
 
-      {/* RODAPÉ (VERSÃO E LOGOUT) */}
-      <div className="p-4 border-t border-dm-graphite">
+      {/* RODAPÉ DA SIDEBAR */}
+      <div className="p-4 border-t border-dm-graphite bg-dm-black shrink-0">
         <div className="text-center mb-4">
           <p className="text-xs text-dm-white/40">Desenvolvido para Danilson</p>
-          <p className="text-xs text-dm-gold">v1.2 Premium</p>
+          <p className="text-xs text-dm-gold font-medium">v1.4 Premium</p>
         </div>
         
         <button 
           onClick={() => signOut()}
-          className="w-full flex items-center justify-center gap-2 py-2 bg-dm-graphite/50 text-dm-white/70 hover:bg-red-500/20 hover:text-red-400 rounded-lg transition-colors text-sm font-medium"
+          className="w-full flex items-center justify-center gap-2 py-2.5 bg-dm-graphite text-dm-white/70 hover:bg-red-500 hover:text-white rounded-lg transition-colors text-sm font-medium"
         >
           <LogOut size={16} />
           Sair do Sistema
