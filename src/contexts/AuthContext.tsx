@@ -48,6 +48,9 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       .select('role')
       .eq('user_id', userId)
 
+    // O ESPIÃO (Vai aparecer no console do navegador - F12)
+    console.log("🔍 O que o app buscou do banco:", data, "Erro:", error);
+
     if (data && !error) {
       const roles = data.map(r => r.role);
       setIsAdmin(roles.includes('admin'));
