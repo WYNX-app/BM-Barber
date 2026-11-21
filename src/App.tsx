@@ -1,12 +1,12 @@
 ﻿import { BrowserRouter, Routes, Route } from 'react-router-dom';
 import { DataProvider } from './contexts/DataContext';
 import { AuthProvider, useAuth } from './contexts/AuthContext'; 
-import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext'; // <-- NOVO
+import { SubscriptionProvider, useSubscription } from './contexts/SubscriptionContext';
 import { ToastProvider } from './contexts/ToastContext';
 import { MainLayout } from './layouts/MainLayout';
 import { Login } from './pages/Login'; 
 import { AdminPanel } from './pages/AdminPanel'; 
-import { SuspendedScreen } from './pages/SuspendedScreen'; // <-- NOVO
+import { SuspendedScreen } from './pages/SuspendedScreen';
 import { Dashboard } from './pages/Dashboard';
 import { Servicos } from './pages/Servicos';
 import { Agenda } from './pages/Agenda';
@@ -20,27 +20,35 @@ function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading: authLoading } = useAuth();
   const { isSuspended, loading: subLoading } = useSubscription();
 
-  // Mostra o loading enquanto verifica o login e a assinatura
-  if (authLoading || subLoading) {
+  // 1. Se o Auth ainda está carregando, mostra o spinner básico.
+  if (authLoading) {
     return (
-      <div className="min-h-screen bg-dm-ivory flex flex-col items-center justify-center">
-        <div className="w-16 h-16 rounded-full border-4 border-dm-gold/30 border-t-dm-gold animate-spin mb-4"></div>
-        <p className="text-dm-graphite font-serif font-bold text-xl">Verificando acesso...</p>
+      <div className="min-h-screen bg-dm-ivory flex items-center justify-center">
+        <div className="w-12 h-12 rounded-full border-4 border-dm-gold/30 border-t-dm-gold animate-spin"></div>
       </div>
     );
   }
 
-  // Se não estiver logado, manda pro Login
+  // 2. Se não tem sessão, vai direto pro Login, ignorando o loading da assinatura.
   if (!session) {
     return <Login />;
   }
 
-  // Se a assinatura estiver suspensa por atraso, bloqueia o app
+  // 3. Se tem sessão, mas a assinatura ainda está carregando, mostra o spinner.
+  if (subLoading) {
+    return (
+      <div className="min-h-screen bg-dm-ivory flex items-center justify-center">
+        <div className="w-12 h-12 rounded-full border-4 border-dm-gold/30 border-t-dm-gold animate-spin"></div>
+      </div>
+    );
+  }
+
+  // 4. Se a assinatura está suspensa, bloqueia a tela.
   if (isSuspended) {
     return <SuspendedScreen />;
   }
 
-  // Se estiver tudo certo, libera o app
+  // 5. Tudo ok, libera o app.
   return <>{children}</>;
 }
 
@@ -49,13 +57,7 @@ function AppRoutes() {
     <Routes>
       <Route path="/login" element={<Login />} />
 
-      <Route
-        element={
-          <ProtectedRoute>
-            <MainLayout />
-          </ProtectedRoute>
-        }
-      >
+      <Route element={<ProtectedRoute><MainLayout /></ProtectedRoute>}>
         <Route path="/" element={<Dashboard />} />
         <Route path="/servicos" element={<Servicos />} />
         <Route path="/agenda" element={<Agenda />} />
@@ -64,10 +66,7 @@ function AppRoutes() {
         <Route path="/estoque" element={<Estoque />} />
         <Route path="/relatorios" element={<Relatorios />} />
         <Route path="/config" element={<Configuracoes />} />
-        
-        {/* A rota do admin fica protegida pelo login, mas ele também precisa passar pelo bloqueio */}
         <Route path="/admin" element={<AdminPanel />} />
-        
         <Route path="*" element={<div className="text-center mt-20 text-xl font-serif">Página não encontrada.</div>} />
       </Route>
     </Routes>
@@ -77,7 +76,6 @@ function AppRoutes() {
 function App() {
   return (
     <AuthProvider>
-      {/* O SubscriptionProvider precisa ficar dentro do AuthProvider para saber quem é o usuário */}
       <SubscriptionProvider> 
         <ToastProvider>
           <DataProvider>

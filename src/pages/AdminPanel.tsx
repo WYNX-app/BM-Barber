@@ -5,7 +5,7 @@ import { useToast } from '../contexts/ToastContext';
 import { 
   Shield, User, CreditCard, CheckCircle, XCircle, 
   Users, AlertTriangle, ChevronRight, Settings, 
-  Activity, DollarSign
+  Activity, DollarSign, Calendar as CalendarIcon
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -39,6 +39,7 @@ export function AdminPanel() {
   const [price, setPrice] = useState('');
   const [dueDay, setDueDay] = useState('');
   const [graceDays, setGraceDays] = useState('7');
+  const [isDayPickerOpen, setIsDayPickerOpen] = useState(false); // Estado do mini calendário
 
   useEffect(() => {
     if (isAdmin) fetchData();
@@ -61,6 +62,7 @@ export function AdminPanel() {
 
   const handleSelectUser = async (user: Profile, currentSubs = subscriptions) => {
     setSelectedUser(user);
+    setIsDayPickerOpen(false); // Fecha o calendário se estiver aberto
     let sub = currentSubs.find(s => s.user_id === user.id);
 
     if (!sub) {
@@ -142,7 +144,6 @@ export function AdminPanel() {
   return (
     <div className="space-y-6 pb-24 md:pb-10">
       
-      {/* HEADER RESPONSIVO */}
       <header className="flex flex-col md:flex-row justify-between items-start md:items-end gap-4 border-b border-dm-gold/30 pb-4 md:pb-6">
         <div className="w-full">
           <div className="flex items-center gap-2 mb-2">
@@ -164,21 +165,17 @@ export function AdminPanel() {
         </div>
       </header>
 
-      {/* MÉTRICAS GLOBAIS - Responsivo: Desliza no celular, lado a lado no PC */}
       <div className="flex md:grid md:grid-cols-3 gap-3 overflow-x-auto pb-2 snap-x snap-mandatory hide-scrollbar">
-        
         <div className="bg-dm-graphite p-5 rounded-2xl border border-dm-gold/20 shadow-lg relative overflow-hidden min-w-[280px] md:min-w-0 snap-center">
           <div className="absolute top-0 right-0 p-4 opacity-10"><DollarSign size={60} className="text-dm-gold"/></div>
           <p className="text-xs font-bold text-dm-white/50 uppercase tracking-wider mb-1">Faturamento (MRR)</p>
           <h3 className="text-3xl md:text-4xl font-serif font-bold text-white">R$ {mrr.toFixed(2)}</h3>
         </div>
-
         <div className="bg-dm-graphite p-5 rounded-2xl border border-dm-gold/20 shadow-lg relative overflow-hidden min-w-[280px] md:min-w-0 snap-center">
           <div className="absolute top-0 right-0 p-4 opacity-10"><Users size={60} className="text-dm-gold"/></div>
           <p className="text-xs font-bold text-dm-white/50 uppercase tracking-wider mb-1">Barbearias Ativas</p>
           <h3 className="text-3xl md:text-4xl font-serif font-bold text-white">{activeBarbers} <span className="text-lg text-dm-white/40 font-sans">/ {totalBarbers}</span></h3>
         </div>
-
         <div className="bg-dm-graphite p-5 rounded-2xl border border-red-500/20 shadow-lg relative overflow-hidden min-w-[280px] md:min-w-0 snap-center">
           <div className="absolute top-0 right-0 p-4 opacity-10"><AlertTriangle size={60} className="text-red-500"/></div>
           <p className="text-xs font-bold text-dm-white/50 uppercase tracking-wider mb-1">Bloqueados</p>
@@ -187,8 +184,6 @@ export function AdminPanel() {
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-        
-        {/* LISTA DE CLIENTES (ESQUERDA) */}
         <div className="lg:col-span-4 bg-dm-white md:bg-dm-graphite rounded-2xl border border-dm-gold/20 shadow-xl overflow-hidden flex flex-col h-auto lg:h-[600px]">
           <div className="p-4 border-b border-dm-gold/20 md:border-dm-white/10 md:bg-dm-black/50">
             <h2 className="text-sm font-bold uppercase tracking-wider text-dm-black md:text-dm-white">Diretório de Barbearias</h2>
@@ -229,7 +224,6 @@ export function AdminPanel() {
           </div>
         </div>
 
-        {/* DETALHES DO CLIENTE (DIREITA) */}
         <div className="lg:col-span-8">
           <AnimatePresence mode="wait">
             {selectedUser && selectedSub ? (
@@ -240,7 +234,6 @@ export function AdminPanel() {
                 exit={{ opacity: 0, y: -10 }}
                 className="space-y-4 md:space-y-6"
               >
-                {/* HEADER DO CLIENTE */}
                 <div className="bg-dm-white p-4 md:p-6 rounded-2xl border border-dm-gold/30 shadow-sm flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
                   <div className="flex items-center gap-3 md:gap-4">
                     <div className="w-12 h-12 md:w-16 md:h-16 rounded-full bg-dm-black text-dm-gold flex items-center justify-center text-xl md:text-2xl font-bold">
@@ -263,7 +256,6 @@ export function AdminPanel() {
                 </div>
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4 md:gap-6">
-                  {/* CONFIGURAÇÃO DO PLANO */}
                   <div className="bg-dm-white p-4 md:p-6 rounded-2xl border border-dm-gold/20 shadow-sm">
                     <h3 className="text-base md:text-lg font-serif mb-3 md:mb-4 flex items-center gap-2 border-b border-dm-ivory pb-2">
                       <Settings className="text-dm-gold" size={20}/> Configurar Plano
@@ -274,11 +266,50 @@ export function AdminPanel() {
                         <label className="block text-[10px] md:text-xs font-bold text-dm-graphite uppercase mb-1">Valor Mensal (R$)</label>
                         <input type="number" value={price} onChange={e => setPrice(e.target.value)} className="w-full p-3 border-2 border-dm-ivory rounded-xl focus:border-dm-gold outline-none font-bold text-base md:text-lg" />
                       </div>
+                      
                       <div className="grid grid-cols-2 gap-3 md:gap-4">
-                        <div>
+                        {/* SELETOR DE VENCIMENTO CUSTOMIZADO */}
+                        <div className="relative">
                           <label className="block text-[10px] md:text-xs font-bold text-dm-graphite uppercase mb-1">Vencimento</label>
-                          <input type="number" min="1" max="31" value={dueDay} onChange={e => setDueDay(e.target.value)} className="w-full p-3 border-2 border-dm-ivory rounded-xl focus:border-dm-gold outline-none font-bold text-base md:text-lg" />
+                          <button 
+                            type="button"
+                            onClick={() => setIsDayPickerOpen(!isDayPickerOpen)}
+                            className="w-full flex items-center justify-between p-3 border-2 border-dm-ivory rounded-xl focus:border-dm-gold outline-none font-bold text-base md:text-lg bg-white text-left"
+                          >
+                            Dia {dueDay}
+                            <CalendarIcon size={18} className="text-dm-gold" />
+                          </button>
+                          
+                          <AnimatePresence>
+                            {isDayPickerOpen && (
+                              <motion.div 
+                                initial={{ opacity: 0, y: -10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }}
+                                className="absolute z-50 top-full left-0 mt-2 w-64 bg-white border border-dm-gold/30 rounded-xl shadow-xl p-3"
+                              >
+                                <div className="grid grid-cols-7 gap-1">
+                                  {Array.from({ length: 31 }, (_, i) => i + 1).map(day => (
+                                    <button
+                                      key={day}
+                                      type="button"
+                                      onClick={() => {
+                                        setDueDay(day.toString());
+                                        setIsDayPickerOpen(false);
+                                      }}
+                                      className={`h-8 w-8 rounded-lg text-sm font-bold flex items-center justify-center transition-colors ${
+                                        parseInt(dueDay) === day 
+                                          ? 'bg-dm-gold text-dm-black' 
+                                          : 'hover:bg-dm-ivory text-dm-graphite'
+                                      }`}
+                                    >
+                                      {day}
+                                    </button>
+                                  ))}
+                                </div>
+                              </motion.div>
+                            )}
+                          </AnimatePresence>
                         </div>
+
                         <div>
                           <label className="block text-[10px] md:text-xs font-bold text-dm-graphite uppercase mb-1">Tolerância</label>
                           <select value={graceDays} onChange={e => setGraceDays(e.target.value)} className="w-full p-3 border-2 border-dm-ivory rounded-xl focus:border-dm-gold outline-none font-bold text-base md:text-lg bg-white">
@@ -295,7 +326,6 @@ export function AdminPanel() {
                     </div>
                   </div>
 
-                  {/* AÇÕES FINANCEIRAS */}
                   <div className="bg-dm-black p-4 md:p-6 rounded-2xl border border-dm-graphite shadow-lg flex flex-col justify-between relative overflow-hidden">
                     <div className="absolute -top-10 -right-10 opacity-5"><Activity size={150} className="text-dm-gold"/></div>
                     
