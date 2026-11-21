@@ -42,3 +42,49 @@ input[type=number]::-webkit-outer-spin-button {
 .sidebar-scroll::-webkit-scrollbar-thumb:hover {
   background: rgba(180, 154, 104, 0.8);
 }
+
+/* ==========================================
+   REGRAS PARA IMPRESSÃO DE RELATÓRIOS (PDF/A4)
+   ========================================== */
+@media print {
+  /* Esconde menus, botões e barras de navegação */
+  aside, 
+  nav, 
+  button, 
+  .no-print, 
+  header.no-print {
+    display: none !important;
+  }
+
+  /* Reseta o layout para ocupar a folha inteira */
+  body, html, #root, main {
+    margin: 0 !important;
+    padding: 0 !important;
+    background: #ffffff !important;
+    width: 100% !important;
+    height: 100% !important;
+  }
+
+  /* Remove a margem da sidebar no desktop */
+  main {
+    margin-left: 0 !important;
+  }
+
+  /* Formata a área do relatório */
+  .print-area {
+    box-shadow: none !important;
+    border: none !important;
+    padding: 0 !important;
+    margin: 0 !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    background: white !important;
+    color: black !important;
+  }
+
+  /* Força o navegador a imprimir as cores de fundo (cards e gráficos) */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+}

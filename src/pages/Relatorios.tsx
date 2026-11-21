@@ -8,14 +8,11 @@ import { ptBR } from 'date-fns/locale';
 export const Relatorios = () => {
   const { transactions, clients, getClientStatus } = useData();
   
-  // Agora o estado é uma data real, não um texto "yyyy-MM"
   const [currentDate, setCurrentDate] = useState(new Date());
 
-  // Funções para mudar o mês
   const handlePrevMonth = () => setCurrentDate(subMonths(currentDate, 1));
   const handleNextMonth = () => setCurrentDate(addMonths(currentDate, 1));
 
-  // Variáveis para cálculos
   const monthString = format(currentDate, 'yyyy-MM');
   const displayMonth = format(currentDate, "MMMM 'de' yyyy", { locale: ptBR });
   const displayMonthCapitalized = displayMonth.charAt(0).toUpperCase() + displayMonth.slice(1);
@@ -26,17 +23,15 @@ export const Relatorios = () => {
   const ticketMedio = monthTransactions.length > 0 ? totalRevenue / monthTransactions.length : 0;
 
   const handleExportPDF = () => {
+    // O código do jsPDF continua o mesmo da resposta anterior
     const doc = new jsPDF('p', 'mm', 'a4');
     const pageWidth = doc.internal.pageSize.getWidth();
     const margin = 20;
     let y = 20;
-
-    // Cores D&M
     const black = [23, 23, 23] as [number, number, number];
     const gold = [180, 154, 104] as [number, number, number];
     const gray = [100, 100, 100] as [number, number, number];
 
-    // --- CABEÇALHO ---
     doc.setDrawColor(...black);
     doc.setLineWidth(0.5);
     doc.circle(pageWidth / 2, y + 10, 8);
@@ -44,41 +39,31 @@ export const Relatorios = () => {
     doc.setFontSize(12);
     doc.setTextColor(...black);
     doc.text('D&M', pageWidth / 2, y + 11, { align: 'center' });
-
     y += 28;
     doc.setFont('times', 'bold');
     doc.setFontSize(24);
     doc.text('BARBEARIA D&M', pageWidth / 2, y, { align: 'center' });
-
     y += 8;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
     doc.setTextColor(...gray);
     doc.text('Relatório de Desempenho Mensal', pageWidth / 2, y, { align: 'center' });
-
     y += 8;
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(...black);
     doc.text(`Período: ${displayMonthCapitalized}`, pageWidth / 2, y, { align: 'center' });
-
-    // Linha divisória dourada
     y += 10;
     doc.setDrawColor(...gold);
     doc.setLineWidth(1);
     doc.line(margin, y, pageWidth - margin, y);
-
-    // --- INDICADORES FINANCEIROS ---
     y += 15;
     doc.setFont('times', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(...black);
     doc.text('Resumo Financeiro', margin, y);
-
     y += 8;
     const boxWidth = (pageWidth - (margin * 2) - 10) / 3;
     const boxHeight = 25;
-    
-    // Caixa 1
     doc.setDrawColor(...gold);
     doc.setLineWidth(0.5);
     doc.rect(margin, y, boxWidth, boxHeight);
@@ -90,8 +75,6 @@ export const Relatorios = () => {
     doc.setFontSize(14);
     doc.setTextColor(...black);
     doc.text(`R$ ${totalRevenue.toFixed(2)}`, margin + 5, y + 18);
-
-    // Caixa 2
     doc.setDrawColor(...gold);
     doc.rect(margin + boxWidth + 5, y, boxWidth, boxHeight);
     doc.setFont('helvetica', 'normal');
@@ -102,8 +85,6 @@ export const Relatorios = () => {
     doc.setFontSize(14);
     doc.setTextColor(...black);
     doc.text(`R$ ${ticketMedio.toFixed(2)}`, margin + boxWidth + 10, y + 18);
-
-    // Caixa 3
     doc.setDrawColor(...gold);
     doc.rect(margin + (boxWidth * 2) + 10, y, boxWidth, boxHeight);
     doc.setFont('helvetica', 'normal');
@@ -114,29 +95,22 @@ export const Relatorios = () => {
     doc.setFontSize(14);
     doc.setTextColor(200, 50, 50);
     doc.text(`R$ ${pending.toFixed(2)}`, margin + (boxWidth * 2) + 15, y + 18);
-
-    // --- ANÁLISE DE CLIENTES ---
     y += 35;
     doc.setFont('times', 'bold');
     doc.setFontSize(16);
     doc.setTextColor(...black);
     doc.text('Análise de Clientes', margin, y);
-
     y += 8;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(12);
     doc.text(`Total de clientes cadastrados: ${clients.length}`, margin, y);
-
     y += 10;
     doc.setFont('helvetica', 'bold');
     doc.text('Clientes em Risco / Inativos:', margin, y);
-    
     y += 6;
     doc.setFont('helvetica', 'normal');
     doc.setFontSize(11);
-    
     const riskClients = clients.filter(c => ['Risco', 'Inativo'].includes(getClientStatus(c))).slice(0, 8);
-    
     if (riskClients.length === 0) {
       doc.text('Nenhum cliente em risco no momento.', margin, y);
     } else {
@@ -149,25 +123,18 @@ export const Relatorios = () => {
         y += 6;
       });
     }
-
-    // --- RODAPÉ ---
     y = doc.internal.pageSize.getHeight() - 20;
     doc.setDrawColor(...gold);
     doc.line(margin, y - 5, pageWidth - margin, y - 5);
     doc.setFontSize(9);
     doc.setTextColor(...gray);
-    doc.text(
-      `Relatório gerado pelo Sistema de Gestão D&M em ${format(new Date(), 'dd/MM/yyyy HH:mm')}`,
-      pageWidth / 2,
-      y,
-      { align: 'center' }
-    );
-
+    doc.text(`Relatório gerado pelo Sistema de Gestão D&M em ${format(new Date(), 'dd/MM/yyyy HH:mm')}`, pageWidth / 2, y, { align: 'center' });
     doc.save(`Relatorio_DM_${monthString}.pdf`);
   };
 
   return (
     <div className="space-y-6 max-w-4xl mx-auto">
+      {/* CABEÇALHO DA TELA (Oculto na impressão) */}
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 no-print">
         <div>
           <h1 className="text-3xl font-serif">Relatórios</h1>
@@ -183,32 +150,22 @@ export const Relatorios = () => {
         </div>
       </div>
 
-      {/* NOVO SELETOR DE MÊS (Estilo iOS/Mobile) */}
+      {/* SELETOR DE MÊS (Oculto na impressão) */}
       <div className="mb-4 no-print bg-dm-white p-2 rounded-2xl border border-dm-gold/30 shadow-sm flex items-center justify-between">
-        <button 
-          onClick={handlePrevMonth}
-          className="p-3 bg-dm-ivory/50 hover:bg-dm-gold/20 rounded-xl transition-colors text-dm-black"
-        >
+        <button onClick={handlePrevMonth} className="p-3 bg-dm-ivory/50 hover:bg-dm-gold/20 rounded-xl transition-colors text-dm-black">
           <ChevronLeft size={24} />
         </button>
-        
         <div className="text-center flex-1">
           <span className="block text-xs text-dm-graphite/60 uppercase tracking-wider font-semibold">Mês Selecionado</span>
-          <span className="block text-lg font-serif font-bold text-dm-black">
-            {displayMonthCapitalized}
-          </span>
+          <span className="block text-lg font-serif font-bold text-dm-black">{displayMonthCapitalized}</span>
         </div>
-
-        <button 
-          onClick={handleNextMonth}
-          className="p-3 bg-dm-ivory/50 hover:bg-dm-gold/20 rounded-xl transition-colors text-dm-black"
-        >
+        <button onClick={handleNextMonth} className="p-3 bg-dm-ivory/50 hover:bg-dm-gold/20 rounded-xl transition-colors text-dm-black">
           <ChevronRight size={24} />
         </button>
       </div>
 
-      {/* VISUALIZAÇÃO NA TELA */}
-      <div className="bg-dm-white p-6 md:p-8 rounded-xl shadow-sm border border-dm-gold/20 text-dm-black">
+      {/* ÁREA DO RELATÓRIO (Esta parte vai para a impressão) */}
+      <div className="bg-dm-white p-6 md:p-8 rounded-xl shadow-sm border border-dm-gold/20 text-dm-black print-area">
         <div className="text-center border-b-2 border-dm-gold pb-6 mb-6">
           <div className="w-16 h-16 rounded-full border-2 border-dm-black flex items-center justify-center mx-auto mb-2">
             <span className="font-serif text-xl font-bold">D&M</span>
@@ -250,6 +207,10 @@ export const Relatorios = () => {
               )}
             </ul>
           </div>
+        </div>
+
+        <div className="mt-8 pt-4 border-t border-dm-gold/30 text-center text-xs text-dm-graphite/50">
+          <p>Relatório gerado automaticamente pelo Sistema de Gestão D&M em {format(new Date(), 'dd/MM/yyyy HH:mm')}.</p>
         </div>
       </div>
     </div>
