@@ -32,27 +32,37 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
       setSession(session)
       setUser(session?.user ?? null)
       if (session?.user) checkRole(session.user.id)
-      else setIsAdmin(false)
+      else {
+        setIsAdmin(false)
+        setLoading(false)
+      }
     })
 
     return () => subscription.unsubscribe()
   }, [])
 
+  // MUDANÇA AQUI: Lê todas as roles e verifica se 'admin' está entre elas
   async function checkRole(userId: string) {
-    const { data } = await supabase
+    const { data, error } = await supabase
       .from('user_roles')
       .select('role')
       .eq('user_id', userId)
-      .single()
-    setIsAdmin(data?.role === 'admin')
+
+    if (data && !error) {
+      const roles = data.map(r => r.role);
+      setIsAdmin(roles.includes('admin'));
+    } else {
+      setIsAdmin(false);
+    }
+    setLoading(false);
   }
 
   async function signIn(email: string, password: string) {
+    setLoading(true);
     const { error } = await supabase.auth.signInWithPassword({ email, password })
     return { error }
   }
 
-  // NOVA FUNÇÃO DE CADASTRO
   async function signUp(email: string, password: string, fullName: string) {
     const { error } = await supabase.auth.signUp({ 
       email, 
