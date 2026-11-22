@@ -1,0 +1,12 @@
+[
+  {
+    "relation": ["delegate_permission/common.handle_all_urls"],
+    "target": {
+      "namespace": "android_app",
+      "package_name": "com.dm.barbearia",
+      "sha256_cert_fingerprints": [
+        "69:37:C3:A9:1C:71:20:4B:1C:E3:E3:96:EC:FF:D6:FE:94:D9:54:49:AB:A8:DD:DC:B1:EC:25:64:3C:19:03:03"
+      ]
+    }
+  }
+]
