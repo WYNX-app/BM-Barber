@@ -28,6 +28,7 @@ export const Relatorios = () => {
   const ticketMedio = monthTransactions.length > 0 ? totalRevenue / monthTransactions.length : 0;
 
   // Função para enviar o recibo individual
+  // Função para enviar o recibo individual
   const handleSendReceipt = (appt: any) => {
     const client = clients.find(c => c.id === appt.clientId);
     if (!client) return;
@@ -39,8 +40,20 @@ export const Relatorios = () => {
 
     const apptServices = appt.serviceId.split(',').map((id: string) => services.find(s => s.id === id)?.name).join(' + ');
     
+    // MENSAGEM REFORMULADA E PREMIUM
     const message = encodeURIComponent(
-      `*BARBEARIA D&M* 💈\n\n*Recibo de Atendimento*\n\nOlá, ${client.name}!\nSegue o comprovante do seu atendimento:\n\n📅 *Data:* ${format(new Date(appt.date), 'dd/MM/yyyy')}\n✂️ *Serviços:* ${apptServices}\n💰 *Valor:* R$ ${appt.price.toFixed(2)}\n✅ *Status:* ${appt.paymentStatus === 'pago' ? 'Pago' : 'Pendente'}\n\nAgradecemos a preferência! Esperamos você em breve.`
+      `*💈 BARBEARIA D&M 💈*\n` +
+      `_Tradição e Estilo_\n\n` +
+      `Olá, *${client.name}*! Tudo bem?\n\n` +
+      `Segue o recibo do seu atendimento de hoje:\n\n` +
+      `📅 *Data:* ${format(new Date(appt.date), 'dd/MM/yyyy')}\n` +
+      `✂️ *Serviços:* ${apptServices}\n\n` +
+      `━━━━━━━━━━━━━━━━━━\n` +
+      `💰 *Valor Total:* *R$ ${appt.price.toFixed(2)}*\n` +
+      `💳 *Status:* ${appt.paymentStatus === 'pago' ? '*PAGO* ✅' : '*PENDENTE* ⏳'}\n` +
+      `━━━━━━━━━━━━━━━━━━\n\n` +
+      `Agradecemos imensamente pela sua preferência! 🙏🏼\n` +
+      `Esperamos te ver novamente em breve para manter o visual em dia. 😉✂️`
     );
 
     const cleanPhone = client.phone.replace(/\D/g, '');
