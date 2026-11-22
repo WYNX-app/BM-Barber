@@ -210,55 +210,35 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     const today = new Date().toISOString().split('T')[0];
     const time = new Date().toTimeString().slice(0, 5);
 
-    // 1. Cria ou busca cliente
     let clientId = clients.find(c => c.name.toLowerCase() === data.clientName.toLowerCase())?.id;
     if (!clientId) {
       const { data: saved, error } = await supabase.from('clients').insert({ user_id: user.id, name: data.clientName, phone: '', notes: '' }).select().single();
-      if (error) throw error;
+      if (error) throw new Error("Erro ao criar cliente: " + error.message);
       if (saved) { clientId = saved.id; setClients(prev => [...prev, mapClient(saved)]); }
     }
-    if (!clientId) return;
+    if (!clientId) throw new Error("Cliente não encontrado.");
 
     const totalPrice = data.services.reduce((acc, curr) => acc + curr.price, 0);
     const serviceIdsString = data.services.map(s => s.id).join(',');
 
-    // 2. Cria o Agendamento
     const { data: savedAppt, error: apptError } = await supabase.from('appointments').insert({
-      user_id: user.id, 
-      client_id: clientId, 
-      service_id: serviceIdsString, 
-      date: today, 
-      time, 
-      status: 'concluido', 
-      price: totalPrice, 
-      payment_status: data.paymentStatus
+      user_id: user.id, client_id: clientId, service_id: serviceIdsString, date: today, time, status: 'concluido', price: totalPrice, payment_status: data.paymentStatus
     }).select().single();
 
-    if (apptError) throw apptError;
+    if (apptError) throw new Error("Erro no agendamento: " + apptError.message);
     if (savedAppt) setAppointments(prev => [...prev, mapAppointment(savedAppt)]);
 
-    // 3. Se pagou, gera a transação e atualiza o cliente
     if (data.paymentStatus === 'pago') {
       const { data: savedTx, error: txError } = await supabase.from('transactions').insert({
-        user_id: user.id, 
-        appointment_id: savedAppt?.id, 
-        type: 'receita', 
-        amount: totalPrice, 
-        date: today, 
-        description: `Atendimento - ${data.clientName}`, 
-        status: 'pago'
+        user_id: user.id, appointment_id: savedAppt?.id, type: 'receita', amount: totalPrice, date: today, description: `Atendimento - ${data.clientName}`, status: 'pago'
       }).select().single();
       
-      if (txError) throw txError;
+      if (txError) throw new Error("Erro financeiro: " + txError.message);
       if (savedTx) setTransactions(prev => [...prev, savedTx as Transaction]);
 
       const clientToUpdate = clients.find(c => c.id === clientId);
       if (clientToUpdate) {
-        await updateClient(clientId, { 
-          lastVisit: today, 
-          totalVisits: clientToUpdate.totalVisits + 1, 
-          totalSpent: clientToUpdate.totalSpent + totalPrice 
-        });
+        await updateClient(clientId, { lastVisit: today, totalVisits: clientToUpdate.totalVisits + 1, totalSpent: clientToUpdate.totalSpent + totalPrice });
       }
     }
   };

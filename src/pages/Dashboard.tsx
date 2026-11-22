@@ -54,10 +54,8 @@ export const Dashboard = () => {
   const totalPrice = cart.reduce((acc, curr) => acc + curr.price, 0);
   const troco = Number(valorPago) > totalPrice ? Number(valorPago) - totalPrice : 0;
 
-  const handleRegister = (e: React.FormEvent) => {
+  const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    
-    // Substituindo o alert() pelo showToast()
     if (!clientName || cart.length === 0) {
       return showToast('Preencha o nome e adicione pelo menos um serviço!', 'error');
     }
@@ -69,13 +67,21 @@ export const Dashboard = () => {
     setLastTotal(totalPrice);
     setLastName(clientName);
 
-    quickRegister({ clientName, services: cart, paymentStatus });
-    
-    setClientName('');
-    setCart([]);
-    setValorPago('');
-    setSuccessMsg('Atendimento registrado!');
-    setTimeout(() => setSuccessMsg(''), 6000);
+    try {
+      // await faz o app esperar o banco salvar antes de limpar a tela
+      await quickRegister({ clientName, services: cart, paymentStatus });
+      
+      // Se chegou aqui, deu tudo certo
+      setClientName('');
+      setCart([]);
+      setValorPago('');
+      setSuccessMsg('Atendimento registrado!');
+      setTimeout(() => setSuccessMsg(''), 6000);
+    } catch (error: any) {
+      // Se o banco der erro, mostra na tela
+      console.error(error);
+      showToast(error.message || 'Erro ao registrar atendimento no banco.', 'error');
+    }
   };
 
   const handleNameChange = (e: React.ChangeEvent<HTMLInputElement>) => {
