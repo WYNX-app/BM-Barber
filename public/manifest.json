@@ -4,7 +4,7 @@
   "description": "Sistema de gestão inteligente da Barbearia D&M",
   "start_url": "/",
   "display": "standalone",
-  "background_color": "#F1EBDD",
+  "background_color": "#171717",
   "theme_color": "#171717",
   "orientation": "portrait",
   "icons": [

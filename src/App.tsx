@@ -16,6 +16,9 @@ import { Estoque } from './pages/Estoque';
 import { Relatorios } from './pages/Relatorios';
 import { Configuracoes } from './pages/Configuracoes';
 
+// IMPORTANDO O MODAL DE INSTALAÇÃO DO APP (PWA)
+import { PWAInstaller } from './components/ui/PWAInstaller'; 
+
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { session, loading: authLoading } = useAuth();
   const { isSuspended, loading: subLoading } = useSubscription();
@@ -81,6 +84,8 @@ function App() {
           <DataProvider>
             <BrowserRouter>
               <AppRoutes />
+              {/* O MODAL DE INSTALAÇÃO FICA AQUI, FLUTUANDO SOBRE O APP */}
+              <PWAInstaller />
             </BrowserRouter>
           </DataProvider>
         </ToastProvider>
