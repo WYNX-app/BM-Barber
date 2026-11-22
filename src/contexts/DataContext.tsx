@@ -4,6 +4,11 @@ import { differenceInDays, format } from 'date-fns';
 import { supabase } from '../lib/supabase';
 import { useAuth } from './AuthContext';
 
+interface Backup {
+  id: string;
+  created_at: string;
+}
+
 interface DataContextType {
   clients: Client[];
   services: Service[];
@@ -20,6 +25,9 @@ interface DataContextType {
   getClientStatus: (client: Client) => string;
   loadingData: boolean;
   lastBackupDate: string | null;
+  backups: Backup[];
+  fetchBackups: () => Promise<void>;
+  restoreBackup: (backupId: string) => Promise<void>;
 }
 
 const DataContext = createContext<DataContextType | undefined>(undefined);
@@ -34,8 +42,8 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   const [products, setProducts] = useState<Product[]>([]);
   const [loadingData, setLoadingData] = useState(true);
   const [lastBackupDate, setLastBackupDate] = useState<string | null>(null);
+  const [backups, setBackups] = useState<Backup[]>([]);
 
-  // BUSCA DE DADOS (Apenas o que não está na lixeira)
   const fetchData = async () => {
     if (!user) return;
     setLoadingData(true);
@@ -69,14 +77,62 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     setLoadingData(false);
   };
 
-  // BACKUP AUTOMÁTICO DIÁRIO
+  const fetchBackups = async () => {
+    if (!user) return;
+    const { data } = await supabase
+      .from('backups')
+      .select('id, created_at')
+      .eq('user_id', user.id)
+      .order('created_at', { ascending: false });
+    if (data) setBackups(data);
+  };
+
+  const restoreBackup = async (backupId: string) => {
+    if (!user) return;
+    setLoadingData(true);
+
+    try {
+      // 1. Buscar o JSON do backup
+      const { data: backupData, error } = await supabase
+        .from('backups')
+        .select('backup_data')
+        .eq('id', backupId)
+        .single();
+      
+      if (error || !backupData) throw new Error("Backup não encontrado");
+      const data = backupData.backup_data;
+
+      // 2. Deletar os dados atuais (Ordem reversa por causa das chaves estrangeiras)
+      await supabase.from('transactions').delete().eq('user_id', user.id);
+      await supabase.from('appointments').delete().eq('user_id', user.id);
+      await supabase.from('products').delete().eq('user_id', user.id);
+      await supabase.from('services').delete().eq('user_id', user.id);
+      await supabase.from('clients').delete().eq('user_id', user.id);
+
+      // 3. Reinserir os dados do backup (Ordem correta)
+      if (data.clients?.length > 0) await supabase.from('clients').insert(data.clients);
+      if (data.services?.length > 0) await supabase.from('services').insert(data.services);
+      if (data.products?.length > 0) await supabase.from('products').insert(data.products);
+      if (data.appointments?.length > 0) await supabase.from('appointments').insert(data.appointments);
+      if (data.transactions?.length > 0) await supabase.from('transactions').insert(data.transactions);
+
+      // 4. Recarregar os dados na tela
+      await fetchData();
+      await fetchBackups();
+    } catch (error) {
+      console.error("Erro ao restaurar backup:", error);
+      throw error;
+    } finally {
+      setLoadingData(false);
+    }
+  };
+
   const performAutoBackup = async (currentData: any) => {
     if (!user) return;
     const today = format(new Date(), 'yyyy-MM-dd');
     const lastBackup = localStorage.getItem(`@dm_backup_${user.id}`);
 
     if (lastBackup !== today) {
-      console.log('Iniciando backup automático diário...');
       const { error } = await supabase.from('backups').insert({
         user_id: user.id,
         backup_data: currentData
@@ -85,7 +141,6 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
       if (!error) {
         localStorage.setItem(`@dm_backup_${user.id}`, today);
         setLastBackupDate(today);
-        console.log('Backup automático realizado com sucesso!');
       }
     }
   };
@@ -97,16 +152,14 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
       return;
     }
     fetchData();
+    fetchBackups();
   }, [user]);
 
-  // Dispara o backup sempre que os dados terminam de carregar
   useEffect(() => {
     if (!loadingData && user && clients.length > 0) {
       performAutoBackup({ clients, services, appointments, transactions, products });
     }
   }, [loadingData]);
-
-  // --- FUNÇÕES DE ESCRITA COM SOFT DELETE ---
 
   const addClient = async (data: any) => {
     if (!user) return;
@@ -120,7 +173,6 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     if (!error) setClients(prev => prev.map(c => c.id === id ? { ...c, ...data } : c));
   };
 
-  // SOFT DELETE CLIENTE
   const removeClient = async (id: string) => {
     const { error } = await supabase.from('clients').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     if (!error) setClients(prev => prev.filter(c => c.id !== id));
@@ -134,7 +186,6 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
     if (saved) setServices(prev => [...prev, saved as Service]);
   };
 
-  // SOFT DELETE SERVIÇO
   const removeService = async (id: string) => {
     const { error } = await supabase.from('services').update({ deleted_at: new Date().toISOString() }).eq('id', id);
     if (error) throw error;
@@ -186,7 +237,7 @@ export const DataProvider = ({ children }: { children: React.ReactNode }) => {
   };
 
   return (
-    <DataContext.Provider value={{ clients, services, professionals, appointments, transactions, products, addClient, updateClient, removeClient, addService, removeService, quickRegister, getClientStatus, loadingData, lastBackupDate }}>
+    <DataContext.Provider value={{ clients, services, professionals, appointments, transactions, products, addClient, updateClient, removeClient, addService, removeService, quickRegister, getClientStatus, loadingData, lastBackupDate, backups, fetchBackups, restoreBackup }}>
       {children}
     </DataContext.Provider>
   );

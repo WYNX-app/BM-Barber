@@ -2,13 +2,15 @@ import { useState, useEffect } from 'react';
 import { supabase } from '../lib/supabase';
 import { useAuth } from '../contexts/AuthContext';
 import { useToast } from '../contexts/ToastContext';
+import { useData } from '../contexts/DataContext'; // <-- Importando Backups
 import { 
   Shield, User, CreditCard, CheckCircle, XCircle, 
   Users, AlertTriangle, ChevronRight, Settings, 
-  Activity, DollarSign, Calendar as CalendarIcon
+  Activity, DollarSign, Calendar as CalendarIcon, History, RotateCcw
 } from 'lucide-react';
 import { format } from 'date-fns';
 import { motion, AnimatePresence } from 'framer-motion';
+import { ConfirmModal } from '../components/ui/ConfirmModal'; // <-- Modal customizado
 
 interface Profile {
   id: string;
@@ -29,17 +31,20 @@ interface Subscription {
 export function AdminPanel() {
   const { isAdmin } = useAuth();
   const { showToast } = useToast();
+  const { backups, restoreBackup } = useData(); // <-- Puxando backups
   
   const [profiles, setProfiles] = useState<Profile[]>([]);
   const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
   const [selectedUser, setSelectedUser] = useState<Profile | null>(null);
   const [selectedSub, setSelectedSub] = useState<Subscription | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isRestoring, setIsRestoring] = useState(false);
+  const [backupToRestore, setBackupToRestore] = useState<string | null>(null); // Estado do modal
 
   const [price, setPrice] = useState('');
   const [dueDay, setDueDay] = useState('');
   const [graceDays, setGraceDays] = useState('7');
-  const [isDayPickerOpen, setIsDayPickerOpen] = useState(false); // Estado do mini calendário
+  const [isDayPickerOpen, setIsDayPickerOpen] = useState(false);
 
   useEffect(() => {
     if (isAdmin) fetchData();
@@ -62,16 +67,12 @@ export function AdminPanel() {
 
   const handleSelectUser = async (user: Profile, currentSubs = subscriptions) => {
     setSelectedUser(user);
-    setIsDayPickerOpen(false); // Fecha o calendário se estiver aberto
+    setIsDayPickerOpen(false);
     let sub = currentSubs.find(s => s.user_id === user.id);
 
     if (!sub) {
       const { data: newSub } = await supabase.from('subscriptions').insert({
-        user_id: user.id,
-        plan_price: 0,
-        due_day: 10,
-        grace_period_days: 7,
-        status: 'active'
+        user_id: user.id, plan_price: 0, due_day: 10, grace_period_days: 7, status: 'active'
       }).select().single();
       
       if (newSub) {
@@ -132,6 +133,20 @@ export function AdminPanel() {
       showToast(suspend ? 'Acesso Suspenso.' : 'Acesso Reativado.', 'info');
       setSelectedSub({ ...selectedSub, status: newStatus });
       fetchData();
+    }
+  };
+
+  const handleConfirmRestore = async () => {
+    if (!backupToRestore) return;
+    setIsRestoring(true);
+    try {
+      await restoreBackup(backupToRestore);
+      showToast('Sistema restaurado com sucesso!', 'success');
+    } catch (error) {
+      showToast('Erro ao restaurar. Tente novamente.', 'error');
+    } finally {
+      setIsRestoring(false);
+      setBackupToRestore(null);
     }
   };
 
@@ -268,7 +283,6 @@ export function AdminPanel() {
                       </div>
                       
                       <div className="grid grid-cols-2 gap-3 md:gap-4">
-                        {/* SELETOR DE VENCIMENTO CUSTOMIZADO */}
                         <div className="relative">
                           <label className="block text-[10px] md:text-xs font-bold text-dm-graphite uppercase mb-1">Vencimento</label>
                           <button 
@@ -371,6 +385,54 @@ export function AdminPanel() {
           </AnimatePresence>
         </div>
       </div>
+
+      {/* NOVO CARD: GERENCIAMENTO DE BACKUPS */}
+      <div className="bg-dm-white p-6 rounded-2xl border border-dm-gold/20 shadow-sm mt-6">
+        <h3 className="text-lg font-serif mb-4 flex items-center gap-2 border-b border-dm-ivory pb-2">
+          <History className="text-dm-gold" size={20}/> Backup e Restauração
+        </h3>
+        <p className="text-sm text-dm-graphite/70 mb-4">
+          O sistema salva automaticamente uma cópia de segurança na nuvem todos os dias. Se algo der errado, você pode voltar o sistema para um dia anterior.
+        </p>
+
+        <div className="space-y-3">
+          {backups.length === 0 ? (
+            <div className="text-center py-6 text-dm-graphite/50 text-sm">
+              Nenhum backup encontrado ainda.
+            </div>
+          ) : (
+            backups.map((backup) => (
+              <div key={backup.id} className="flex items-center justify-between p-3 bg-dm-ivory/30 rounded-xl border border-dm-gold/10">
+                <div className="flex items-center gap-3">
+                  <div className="p-2 bg-dm-gold/20 text-dm-gold rounded-lg"><History size={18}/></div>
+                  <div>
+                    <p className="font-bold text-dm-black text-sm">Backup de {format(new Date(backup.created_at), 'dd/MM/yyyy')}</p>
+                    <p className="text-xs text-dm-graphite/60">{format(new Date(backup.created_at), 'HH:mm')}</p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => setBackupToRestore(backup.id)}
+                  disabled={isRestoring}
+                  className="px-4 py-2 bg-dm-black text-white rounded-lg text-xs font-bold hover:bg-dm-graphite transition-colors flex items-center gap-2 disabled:opacity-50"
+                >
+                  <RotateCcw size={14} /> {isRestoring ? 'Restaurando...' : 'Restaurar'}
+                </button>
+              </div>
+            ))
+          )}
+        </div>
+      </div>
+
+      {/* MODAL DE CONFIRMAÇÃO DE RESTAURAÇÃO */}
+      <ConfirmModal
+        isOpen={!!backupToRestore}
+        title="Restaurar Backup"
+        message="ATENÇÃO: Isso apagará todos os dados atuais e voltará o sistema exatamente como estava no dia do backup selecionado. Deseja continuar?"
+        confirmText={isRestoring ? "Restaurando..." : "Sim, Restaurar"}
+        isDestructive={true}
+        onConfirm={handleConfirmRestore}
+        onCancel={() => !isRestoring && setBackupToRestore(null)}
+      />
     </div>
   );
 }
