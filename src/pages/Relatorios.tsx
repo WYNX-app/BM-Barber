@@ -28,7 +28,6 @@ export const Relatorios = () => {
   const ticketMedio = monthTransactions.length > 0 ? totalRevenue / monthTransactions.length : 0;
 
   // Função para enviar o recibo individual
-  // Função para enviar o recibo individual
   const handleSendReceipt = (appt: any) => {
     const client = clients.find(c => c.id === appt.clientId);
     if (!client) return;
@@ -40,20 +39,30 @@ export const Relatorios = () => {
 
     const apptServices = appt.serviceId.split(',').map((id: string) => services.find(s => s.id === id)?.name).join(' + ');
     
-    // MENSAGEM REFORMULADA E PREMIUM
+    // Emojis convertidos para Unicode (Evita erro de encoding)
+    const emojiBarbearia = "\uD83D\uDC88"; // 💈
+    const emojiCalendario = "\uD83D\uDCC5"; // 📅
+    const emojiTesoura = "\u2702\uFE0F"; // ✂️
+    const emojiDinheiro = "\uD83D\uDCB0"; // 💰
+    const emojiCartao = "\uD83D\uDCB3"; // 💳
+    const emojiCheck = "\u2705"; // ✅
+    const emojiAmpulheta = "\u231B"; // ⏳
+    const emojiMaos = "\uD83D\uDE4F\uD83C\uDFFC"; // 🙏🏼
+    const emojiPiscadinha = "\uD83D\uDE09"; // 😉
+
     const message = encodeURIComponent(
-      `*💈 BARBEARIA D&M 💈*\n` +
+      `*${emojiBarbearia} BARBEARIA D&M ${emojiBarbearia}*\n` +
       `_Tradição e Estilo_\n\n` +
       `Olá, *${client.name}*! Tudo bem?\n\n` +
       `Segue o recibo do seu atendimento de hoje:\n\n` +
-      `📅 *Data:* ${format(new Date(appt.date), 'dd/MM/yyyy')}\n` +
-      `✂️ *Serviços:* ${apptServices}\n\n` +
+      `${emojiCalendario} *Data:* ${format(new Date(appt.date), 'dd/MM/yyyy')}\n` +
+      `${emojiTesoura} *Serviços:* ${apptServices}\n\n` +
       `━━━━━━━━━━━━━━━━━━\n` +
-      `💰 *Valor Total:* *R$ ${appt.price.toFixed(2)}*\n` +
-      `💳 *Status:* ${appt.paymentStatus === 'pago' ? '*PAGO* ✅' : '*PENDENTE* ⏳'}\n` +
+      `${emojiDinheiro} *Valor Total:* *R$ ${appt.price.toFixed(2)}*\n` +
+      `${emojiCartao} *Status:* ${appt.paymentStatus === 'pago' ? `*PAGO* ${emojiCheck}` : `*PENDENTE* ${emojiAmpulheta}`}\n` +
       `━━━━━━━━━━━━━━━━━━\n\n` +
-      `Agradecemos imensamente pela sua preferência! 🙏🏼\n` +
-      `Esperamos te ver novamente em breve para manter o visual em dia. 😉✂️`
+      `Agradecemos imensamente pela sua preferência! ${emojiMaos}\n` +
+      `Esperamos te ver novamente em breve para manter o visual em dia. ${emojiPiscadinha}${emojiTesoura}`
     );
 
     const cleanPhone = client.phone.replace(/\D/g, '');
