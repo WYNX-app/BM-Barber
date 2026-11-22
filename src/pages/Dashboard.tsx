@@ -226,9 +226,14 @@ export const Dashboard = () => {
               whileTap={cart.length > 0 && clientName ? { scale: 0.98 } : {}}
               type="submit" 
               disabled={cart.length === 0 || !clientName}
-              className={`w-full py-5 rounded-2xl font-bold text-lg transition-all flex items-center justify-center gap-2 ${cart.length > 0 && clientName ? 'bg-gradient-to-r from-dm-gold to-dm-bronze text-white shadow-[0_8px_20px_rgba(180,154,104,0.4)]' : 'bg-dm-ivory text-dm-graphite/40 cursor-not-allowed'}`}
+              className={`w-full py-4 md:py-5 rounded-2xl font-bold text-sm md:text-lg transition-all flex items-center justify-center gap-2 px-2 ${
+                cart.length > 0 && clientName 
+                  ? 'bg-gradient-to-r from-dm-gold to-dm-bronze text-white shadow-[0_8px_20px_rgba(180,154,104,0.4)]' 
+                  : 'bg-dm-ivory text-dm-graphite/40 cursor-not-allowed'
+              }`}
             >
-              <CheckCircle size={24} /> FINALIZAR ATENDIMENTO
+              <CheckCircle size={20} className="md:w-6 md:h-6 shrink-0" /> 
+              <span className="truncate">FINALIZAR ATENDIMENTO</span>
             </motion.button>
 
           </form>
