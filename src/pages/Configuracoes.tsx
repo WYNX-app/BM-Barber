@@ -1,28 +1,27 @@
 import { useState, useEffect } from 'react';
-import { Settings, User, LogOut, Shield, Bell, Smartphone, Trash2, Database, LifeBuoy, MessageCircle } from 'lucide-react';
+import { Settings, User, LogOut, Shield, Bell, Smartphone, Trash2, Database, LifeBuoy, MessageCircle, CheckCircle2 } from 'lucide-react';
 import { useAuth } from '../contexts/AuthContext';
+import { useData } from '../contexts/DataContext'; // <-- IMPORTANTE
 import { useNavigate } from 'react-router-dom';
 import { motion } from 'framer-motion';
+import { format } from 'date-fns'; // <-- IMPORTANTE
 import { ConfirmModal } from '../components/ui/ConfirmModal';
 import { useToast } from '../contexts/ToastContext';
 
 export const Configuracoes = () => {
   const { signOut, user, isAdmin } = useAuth();
+  const { lastBackupDate } = useData(); // <-- Puxando a data do backup
   const navigate = useNavigate();
   const { showToast } = useToast();
 
   const [isLogoutModalOpen, setIsLogoutModalOpen] = useState(false);
   const [isClearDataModalOpen, setIsClearDataModalOpen] = useState(false);
   
-  // Estados para o PWA (Instalação)
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [isInstallable, setIsInstallable] = useState(false);
-  
-  // Estado para Notificações
   const [notificationsEnabled, setNotificationsEnabled] = useState(false);
 
   useEffect(() => {
-    // Escuta o evento de instalação do PWA
     const handleBeforeInstallPrompt = (e: Event) => {
       e.preventDefault();
       setDeferredPrompt(e);
@@ -30,7 +29,6 @@ export const Configuracoes = () => {
     };
     window.addEventListener('beforeinstallprompt', handleBeforeInstallPrompt);
 
-    // Verifica se as notificações já estão ativas
     if ('Notification' in window) {
       setNotificationsEnabled(Notification.permission === 'granted');
     }
@@ -43,7 +41,6 @@ export const Configuracoes = () => {
     navigate('/login');
   };
 
-  // Função para instalar o PWA
   const handleInstallApp = async () => {
     if (!deferredPrompt) {
       showToast('O app já está instalado ou o navegador não suporta.', 'info');
@@ -58,7 +55,6 @@ export const Configuracoes = () => {
     setDeferredPrompt(null);
   };
 
-  // Função para ativar/desativar notificações
   const handleToggleNotifications = async () => {
     if (!('Notification' in window)) {
       showToast('Seu navegador não suporta notificações.', 'error');
@@ -79,23 +75,19 @@ export const Configuracoes = () => {
     }
   };
 
-  // Função para limpar os dados locais do Danilson (sem deslogar)
   const handleClearLocalData = () => {
-    // Limpa apenas as chaves do D&M no localStorage, mantendo a sessão do Supabase
     Object.keys(localStorage).forEach(key => {
       if (key.startsWith('dm_')) {
         localStorage.removeItem(key);
       }
     });
     setIsClearDataModalOpen(false);
-    showToast('Dados locais limpos. O app será recarregado.', 'success');
+    showToast('Cache local limpo. O app será recarregado.', 'success');
     setTimeout(() => window.location.reload(), 2000);
   };
 
-  // Função para abrir o WhatsApp do Suporte (Heitor)
   const handleSupport = () => {
     const mensagem = encodeURIComponent(`Olá, Heitor! Encontrei um problema/erro no sistema da Barbearia D&M. Pode me ajudar?`);
-    // 55 (Brasil) + 89 (DDD) + Número
     window.open(`https://wa.me/5589994386200?text=${mensagem}`, '_blank');
   };
 
@@ -142,6 +134,17 @@ export const Configuracoes = () => {
           
           <div className="space-y-3 flex-1">
             
+            {/* Status do Backup Automático */}
+            <div className="p-4 bg-green-50 border border-green-200 rounded-xl mb-2">
+              <p className="text-green-800 font-bold text-sm flex items-center gap-2">
+                <CheckCircle2 size={16} className="text-green-600" />
+                Backup Automático Protegido
+              </p>
+              <p className="text-xs text-green-700 mt-1">
+                Último backup na nuvem: {lastBackupDate ? format(new Date(lastBackupDate), 'dd/MM/yyyy') : 'Hoje'}
+              </p>
+            </div>
+
             {/* Botão de Instalação PWA */}
             {isInstallable && (
               <motion.button 
@@ -189,15 +192,15 @@ export const Configuracoes = () => {
             >
               <div className="p-2 bg-red-200 text-red-700 rounded-lg"><Trash2 size={20}/></div>
               <div className="text-left">
-                <p className="font-bold text-red-800 text-sm">Limpar Cache Local</p>
-                <p className="text-xs text-red-600/70">Sincroniza os dados do aparelho com a nuvem</p>
+                <p className="font-bold text-red-800 text-sm">Limpar Cache do Aparelho</p>
+                <p className="text-xs text-red-600/70">Força a atualização dos dados na nuvem</p>
               </div>
             </button>
           </div>
 
           {/* Rodapé do Card */}
           <div className="mt-4 pt-4 border-t border-dm-gold/20 text-xs text-dm-graphite/60 space-y-1">
-            <p className="flex items-center gap-1"><Database size={12}/> Versão: 1.4.0 (Cloud)</p>
+            <p className="flex items-center gap-1"><Database size={12}/> Versão: 1.5.0 (Cloud Seguro)</p>
             <p>Status: Sincronizado com Supabase</p>
             {isAdmin && (
               <p className="flex items-center gap-1 text-dm-gold font-bold mt-2">
@@ -208,7 +211,7 @@ export const Configuracoes = () => {
         </div>
       </div>
 
-      {/* NOVO CARD DE SUPORTE TÉCNICO (HEITOR) */}
+      {/* CARD DE SUPORTE TÉCNICO */}
       <div className="bg-gradient-to-r from-dm-black to-dm-graphite p-6 rounded-2xl shadow-lg mt-6 relative overflow-hidden">
         <div className="absolute right-0 top-0 h-full w-1/2 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] opacity-10"></div>
         <div className="relative z-10 flex flex-col md:flex-row items-center justify-between gap-4">
@@ -261,7 +264,7 @@ export const Configuracoes = () => {
 
       <ConfirmModal
         isOpen={isClearDataModalOpen}
-        title="Limpar Dados Locais"
+        title="Limpar Cache"
         message="Isso apagará os dados salvos neste aparelho e os baixará novamente da nuvem. Deseja continuar?"
         confirmText="Sim, Limpar"
         isDestructive={true}
